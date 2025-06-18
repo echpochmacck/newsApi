@@ -2,103 +2,105 @@
 
 namespace app\models;
 
-class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
+use Yii;
+
+/**
+ * This is the model class for table "user".
+ *
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property string $password
+ * @property string|null $token
+ *
+ * @property Favorite[] $favorites
+ */
+class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 {
-    public $id;
-    public $username;
-    public $password;
-    public $authKey;
-    public $accessToken;
+    const SCENARIO_REGISTER = 'register';
 
-    private static $users = [
-        '100' => [
-            'id' => '100',
-            'username' => 'admin',
-            'password' => 'admin',
-            'authKey' => 'test100key',
-            'accessToken' => '100-token',
-        ],
-        '101' => [
-            'id' => '101',
-            'username' => 'demo',
-            'password' => 'demo',
-            'authKey' => 'test101key',
-            'accessToken' => '101-token',
-        ],
-    ];
-
+    public object|null $file = null;
+    /**
+     * {@inheritdoc}
+     */
+    public static function tableName()
+    {
+        return 'user';
+    }
 
     /**
      * {@inheritdoc}
      */
+    public function rules()
+    {
+        return [
+            [['token'], 'default', 'value' => null],
+            [['email', 'password'], 'required'],
+            ['email', 'email', 'on' => self::SCENARIO_REGISTER],
+            ['email', 'unique', 'on' => self::SCENARIO_REGISTER],
+            ['password', 'match', 'pattern' => '/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).{4,}$/', 'on' => self::SCENARIO_REGISTER],
+            ['file', 'file', 'extensions' => 'jpeg, jpg, png', 'maxSize' => 3 * 1024 * 1024, 'skipOnEmpty' => true],
+            ['name', 'required', 'on' => self::SCENARIO_REGISTER],
+            [['name', 'email', 'password', 'token'], 'string', 'max' => 255],
+        ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function attributeLabels()
+    {
+        return [
+            'id' => 'ID',
+            'name' => 'Name',
+            'email' => 'Email',
+            'password' => 'Password',
+            'token' => 'Token',
+        ];
+    }
+
+    /**
+     * Gets query for [[Favorites]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getFavorites()
+    {
+        return $this->hasMany(Favorite::class, ['user_id' => 'id']);
+    }
+
     public static function findIdentity($id)
     {
-        return isset(self::$users[$id]) ? new static(self::$users[$id]) : null;
+        return static::findOne($id);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function findIdentityByAccessToken($token, $type = null)
     {
-        foreach (self::$users as $user) {
-            if ($user['accessToken'] === $token) {
-                return new static($user);
-            }
-        }
-
-        return null;
+        return static::findOne(['token' => $token]);
     }
 
-    /**
-     * Finds user by username
-     *
-     * @param string $username
-     * @return static|null
-     */
-    public static function findByUsername($username)
-    {
-        foreach (self::$users as $user) {
-            if (strcasecmp($user['username'], $username) === 0) {
-                return new static($user);
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function getId()
     {
         return $this->id;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getAuthKey()
     {
-        return $this->authKey;
+        // return $this->authKey;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function validateAuthKey($authKey)
     {
-        return $this->authKey === $authKey;
+        // return $this->authKey === $authKey;
     }
-
-    /**
-     * Validates password
-     *
-     * @param string $password password to validate
-     * @return bool if password provided is valid for current user
-     */
     public function validatePassword($password)
     {
-        return $this->password === $password;
+        return Yii::$app->security->validatePassword($password, $this->password);
+    }
+    public function upload()
+    {
+        $path = Yii::$app->security->generateRandomString() . substr(time(), -5, 2) . ".{$this->file->extension}";
+        $this->file->saveAs('uploads/' . $path);
+        return $path;
     }
 }
