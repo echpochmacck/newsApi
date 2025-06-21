@@ -3,6 +3,7 @@ import Login from "@/views/Login.vue";
 import Register from "@/views/Register.vue";
 import News from "@/views/News.vue";
 import Profile from "@/views/Profile.vue";
+import NotFound from "@/views/NotFound.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -18,6 +19,11 @@ const router = createRouter({
           next();
         }
       },
+    },
+    {
+      path: "/:pathMatch(.*)*",
+      name: "not-found",
+      component: NotFound,
     },
     {
       path: "/register",

@@ -19,11 +19,11 @@
 
 <template>
   <header class="custom-header">
-    <div class="container d-flex justify-content-between align-items-center">
+    <div class="container  d-flex justify-content-between align-items-center">
       <nav class="nav">
         <router-link class="nav-link" to="/">Home</router-link>
         <router-link class="nav-link" to="/profile" v-if="token">Profile</router-link>
-        <router-link class="nav-link" to="/logout" v-if="token" @click.prevent="logout">Logout</router-link>
+        <a class="nav-link" to="/logout" v-if="token" @click.prevent="logout">Logout</a>
       </nav>
       <div class="d-flex gap-3 align-items-center" v-if="!token">
         <router-link class="nav-link" to="/register">Register</router-link>
