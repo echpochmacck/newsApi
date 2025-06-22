@@ -93,9 +93,23 @@ $config = [
                     'controller' => 'news',
                     'prefix' => 'api',
                     'pluralize' => false,
-                    'extraPatterns'=> [
+                    'extraPatterns' => [
                         'GET /' => 'get-news',
-                        'OPTIONS /' => 'options'
+                        'OPTIONS /' => 'options',
+                        'GET popular' => 'get-popular',
+                        'OPTIONS popular' => 'options',
+
+                    ]
+                ],
+                [
+                    'class' => 'yii\rest\UrlRule',
+                    'controller' => 'user',
+                    'prefix' => 'api',
+                    'pluralize' => false,
+                    'extraPatterns' => [
+                        'GET info' => 'get-user-info',
+                        'OPTIONS info' => 'options',
+
                     ]
                 ],
 

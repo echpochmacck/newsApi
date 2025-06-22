@@ -32,13 +32,16 @@ class UserController extends \yii\rest\ActiveController
             'actions' => [
                 'logout' => [
                     'Access-Control-Allow-Credentials' => true,
+                ],
+                'get-user-info' => [
+                    'Access-Control-Allow-Creaditials' => true
                 ]
             ]
         ];
 
         $auth = [
             'class' => HttpBearerAuth::class,
-            'only' => ['logout']
+            'only' => ['logout', 'get-user-info']
         ];
         // re-add authentication filter
         $behaviors['authenticator'] = $auth;
@@ -104,9 +107,11 @@ class UserController extends \yii\rest\ActiveController
             if ($user && $user->validatePassword($model->password)) {
                 $user->token = Yii::$app->security->generateRandomString();
                 $user->save(false);
+                $file = File::findOne(['user_id' => $user->id]);
                 return $this->asJson([
                     'data' => [
-                        'token' => $user->token
+                        'token' => $user->token,
+                        'avatar_url' => $file ? $file->title : null
                     ],
                     'code' => 200
                 ]);
@@ -132,5 +137,21 @@ class UserController extends \yii\rest\ActiveController
         $user->save(false);
         Yii::$app->response->statusCode = 204;
         return '';
+    }
+
+    public function actionGetUserInfo()
+    {
+        $user = Yii::$app->user->identity;
+        $file = File::findOne(['user_id' => Yii::$app->user->id]);
+        return $this->asJson([
+            'data' => [
+                'user' => [
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ],
+                'avatar' => $file ? Yii::$app->request->getHostInfo() . '/uploads/'.$file->title : ''
+            ],
+            'code' => 200
+        ]);
     }
 }
